@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Delivery Tracker — Track Your Package</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(
+                    circle, rgba(59,130,246,0.15), transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%,-50%) scale(1); }
+            50% { transform: translate(-50%,-50%) scale(1.2); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 1;
+            padding: 24px;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .logo {
+            font-size: 64px;
+            animation: float 3s ease-in-out infinite;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .hero-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+            animation: fadeUp 0.6s ease;
+        }
+
+        .hero-title span { color: #3b82f6; }
+
+        .hero-subtitle {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 40px;
+            animation: fadeUp 0.7s ease;
+        }
+
+        .track-card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 36px;
+            border: 1px solid #334155;
+            animation: fadeUp 0.8s ease;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+            gap: 4px;
+        }
+
+        .tab {
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .tab-content.active { display: block; }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+        }
+
+        .input-group input {
+            padding-left: 44px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            height: 48px;
+            width: 100%;
+            transition: border-color 0.2s;
+            margin: 0;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            height: 48px;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+        }
+
+        .error-box {
+            background: #450a0a;
+            color: #f87171;
+            border: 1px solid #7f1d1d;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 40px;
+            animation: fadeUp 1s ease;
+        }
+
+        .feature {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+        }
+
+        .feature:hover {
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+        }
+
+        .feature-icon { font-size: 28px; margin-bottom: 8px; }
+        .feature h3 { color: #e2e8f0; font-size: 14px; margin-bottom: 4px; }
+        .feature p { color: #64748b; font-size: 12px; }
+
+        .loading {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .staff-buttons {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .staff-btn {
+            text-decoration: none;
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .staff-btn-driver {
+            background: #1e293b;
+            color: #4ade80;
+            border: 1px solid #166534;
+        }
+
+        .staff-btn-driver:hover {
+            background: #166534;
+            transform: translateY(-2px);
+        }
+
+        .staff-btn-admin {
+            background: #1e293b;
+            color: #60a5fa;
+            border: 1px solid #1d4ed8;
+        }
+
+        .staff-btn-admin:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-content">
+
+        <span class="logo">📦</span>
+        <h1 class="hero-title">
+            Delivery <span>Tracker</span>
+        </h1>
+        <p class="hero-subtitle">
+            Track your packages in real-time, anywhere
+        </p>
+
+        <div class="track-card">
+
+            <div class="tabs">
+                <button class="tab active"
+                        onclick="switchTab('email')">
+                    📧 Track by Email
+                </button>
+                <button class="tab"
+                        onclick="switchTab('code')">
+                    🔍 Track by Code
+                </button>
+            </div>
+
+            <!-- Tab 1: Email -->
+            <div class="tab-content active" id="tab-email">
+                <div class="input-group">
+                    <span class="input-icon">📧</span>
+                    <input type="email"
+                           id="emailInput"
+                           placeholder="Enter your email address"
+                           onkeypress="if(event.key==='Enter') loginByEmail()"/>
+                </div>
+                <button class="btn-primary"
+                        onclick="loginByEmail()"
+                        id="emailBtn">
+                    <span>View My Packages</span>
+                    <div class="loading" id="emailLoading"></div>
+                </button>
+                <div class="error-box" id="emailError"></div>
+            </div>
+
+            <!-- Tab 2: Code -->
+            <div class="tab-content" id="tab-code">
+                <div class="input-group">
+                    <span class="input-icon">🔍</span>
+                    <input type="text"
+                           id="codeInput"
+                           placeholder="Enter tracking code (TRK...)"
+                           onkeypress="if(event.key==='Enter') trackByCode()"/>
+                </div>
+                <button class="btn-primary"
+                        style="background:#0f766e"
+                        onclick="trackByCode()"
+                        id="codeBtn">
+                    <span>Track Package</span>
+                    <div class="loading" id="codeLoading"></div>
+                </button>
+                <div class="error-box" id="codeError"></div>
+            </div>
+
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-Time</h3>
+                <p>Live tracking updates</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure</h3>
+                <p>Your data is protected</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📍</div>
+                <h3>Accurate</h3>
+                <p>Precise location data</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Staff Buttons -->
+<div class="staff-buttons">
+    <a href="driver.html" class="staff-btn staff-btn-driver">
+        🚛 Driver Portal
+    </a>
+    <a href="admin.html" class="staff-btn staff-btn-admin">
+        🔐 Company Portal
+    </a>
+</div>
+
+<script>
+    const API = 'http://localhost:8080/api';
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach((t, i) => {
+            t.classList.toggle('active',
+                (tab === 'email' && i === 0) ||
+                (tab === 'code' && i === 1));
+        });
+        document.getElementById('tab-email').classList
+            .toggle('active', tab === 'email');
+        document.getElementById('tab-code').classList
+            .toggle('active', tab === 'code');
+    }
+
+    async function loginByEmail() {
+        const email = document.getElementById(
+            'emailInput').value.trim();
+
+        if (!email) {
+            showError('emailError',
+                'Please enter your email address!');
+            return;
+        }
+
+        setLoading('emailBtn', 'emailLoading', true);
+
+        try {
+            const res = await fetch(
+                `${API}/packages/email/${email}`);
+            const packages = await res.json();
+
+            if (packages.length === 0) {
+                showError('emailError',
+                    'No packages found for this email.');
+                setLoading('emailBtn', 'emailLoading', false);
+                return;
+            }
+
+            localStorage.setItem('senderEmail', email);
+            localStorage.setItem('senderName',
+                packages[0].senderName);
+            window.location.href = 'dashboard.html';
+
+        } catch (err) {
+            showError('emailError',
+                'Connection error. Please try again.');
+            setLoading('emailBtn', 'emailLoading', false);
+        }
+    }
+
+    async function trackByCode() {
+        const code = document.getElementById(
+            'codeInput').value.trim();
+
+        if (!code) {
+            showError('codeError',
+                'Please enter a tracking code!');
+            return;
+        }
+
+        setLoading('codeBtn', 'codeLoading', true);
+
+        try {
+            const res = await fetch(
+                `${API}/packages/track/${code}`);
+
+            if (!res.ok) {
+                showError('codeError',
+                    'Package not found. Check your code.');
+                setLoading('codeBtn', 'codeLoading', false);
+                return;
+            }
+
+            window.location.href = `track.html?code=${code}`;
+
+        } catch (err) {
+            showError('codeError',
+                'Connection error. Please try again.');
+            setLoading('codeBtn', 'codeLoading', false);
+        }
+    }
+
+    function setLoading(btnId, loadId, state) {
+        const btn = document.getElementById(btnId);
+        const load = document.getElementById(loadId);
+        btn.disabled = state;
+        load.style.display = state ? 'block' : 'none';
+    }
+
+    function showError(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 4000);
+    }
+</script>
+
+</body>
+</html>

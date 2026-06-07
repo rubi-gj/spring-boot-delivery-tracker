@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Company Portal — Delivery Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 460px;
+            width: 90%;
+            border: 1px solid #3b82f6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal h2 {
+            color: #4ade80;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .modal p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .tracking-code-display {
+            background: #0f172a;
+            border: 2px dashed #3b82f6;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: monospace;
+            font-size: 22px;
+            color: #60a5fa;
+            text-align: center;
+            letter-spacing: 3px;
+            margin: 16px 0;
+        }
+
+        .modal-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-copy {
+            background: #1e3a5f;
+            color: #60a5fa;
+            border: 1px solid #3b82f6;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-close {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .section-title {
+            color: #3b82f6;
+            font-size: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+        }
+
+        .login-box {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 420px;
+            width: 90%;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            color: #3b82f6;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .login-box p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="passwordScreen" class="login-screen">
+    <div class="login-box">
+        <h2>🔐 Company Portal</h2>
+        <p>Enter your credentials to continue</p>
+        <input type="text"
+               id="loginUser"
+               placeholder="Username"
+               style="margin-bottom:12px"
+               onkeypress="if(event.key==='Enter') checkLogin()"/>
+        <input type="password"
+               id="loginPass"
+               placeholder="Password"
+               onkeypress="if(event.key==='Enter') checkLogin()"/>
+        <button onclick="checkLogin()"
+                style="margin-top:8px">
+            Sign In
+        </button>
+        <div id="loginError"
+             class="alert alert-error"
+             style="display:none;margin-top:12px"></div>
+    </div>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminPanel" style="display:none">
+
+    <nav class="navbar">
+        <h1>🔐 Company Portal</h1>
+        <div>
+            <a href="login.html" onclick="logout()">
+                🚪 Sign Out
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalPkg">0</div>
+                <div class="stat-label">Total Packages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="createdPkg">0</div>
+                <div class="stat-label">Created</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="transitPkg">0</div>
+                <div class="stat-label">In Transit</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="deliveredPkg">0</div>
+                <div class="stat-label">Delivered</div>
+            </div>
+        </div>
+
+        <!-- Create Package -->
+        <div class="card">
+            <h2 class="section-title">➕ Create New Package</h2>
+            <input type="text" id="senderName"
+                   placeholder="Sender Name"/>
+            <input type="email" id="recipientEmail"
+                   placeholder="Recipient Email"/>
+            <input type="text" id="destination"
+                   placeholder="Destination (e.g. Durres)"/>
+            <input type="number" id="weight"
+                   placeholder="Weight (kg)" step="0.1"/>
+            <button onclick="createPackage()">
+                ➕ Create Package
+            </button>
+            <div id="createMsg" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Assign Driver -->
+        <div class="card">
+            <h2 class="section-title">
+                🚛 Assign Driver to Package
+            </h2>
+            <input type="text" id="assignCode"
+                   placeholder="Tracking Code (TRK...)"/>
+            <select id="assignDriver">
+                <option value="">Select Driver</option>
+            </select>
+            <button onclick="assignDriver()"
+                    style="background:#166534">
+                🚛 Assign Driver
+            </button>
+            <div id="assignMsg" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="card">
+            <h2 class="section-title">
+                📍 Update Package Status
+            </h2>
+            <input type="text" id="updateCode"
+                   placeholder="Tracking Code (TRK...)"/>
+            <select id="updateStatus">
+                <option value="">Select Status</option>
+                <option value="PICKED_UP">🚛 PICKED UP</option>
+                <option value="IN_TRANSIT">🏭 IN TRANSIT</option>
+                <option value="DELIVERED">✅ DELIVERED</option>
+            </select>
+            <input type="text" id="updateLocation"
+                   placeholder="Location (e.g. Durres Hub)"/>
+            <button onclick="updateStatus()">
+                📍 Update
+            </button>
+            <div id="updateMsg" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Add Driver -->
+        <div class="card">
+            <h2 class="section-title">👤 Add New Driver</h2>
+            <input type="text" id="driverName"
+                   placeholder="Full Name"/>
+            <input type="text" id="driverPhone"
+                   placeholder="Phone Number"/>
+            <input type="text" id="driverLocation"
+                   placeholder="Location (e.g. Tirana Hub)"/>
+            <input type="text" id="driverUsername"
+                   placeholder="Username (for driver login)"/>
+            <input type="password" id="driverPassword"
+                   placeholder="Password (for driver login)"/>
+            <button onclick="createDriver()"
+                    style="background:#1d4ed8">
+                👤 Add Driver
+            </button>
+            <div id="driverMsg" style="margin-top:12px"></div>
+        </div>
+
+        <!-- All Packages -->
+        <div class="card">
+            <h2 class="section-title">📦 All Packages</h2>
+            <button onclick="loadPackages()"
+                    style="width:auto;margin-bottom:16px">
+                🔄 Refresh
+            </button>
+            <table>
+                <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Sender</th>
+                    <th>Email</th>
+                    <th>Destination</th>
+                    <th>Status</th>
+                    <th>Driver</th>
+                    <th>Location</th>
+                </tr>
+                </thead>
+                <tbody id="packageTable">
+                <tr>
+                    <td colspan="7"
+                        style="text-align:center;
+                               color:#64748b">
+                        Click "Refresh" to load...
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- All Drivers -->
+        <div class="card">
+            <h2 class="section-title">🚛 All Drivers</h2>
+            <button onclick="loadDrivers()"
+                    style="width:auto;margin-bottom:16px">
+                🔄 Refresh Drivers
+            </button>
+            <table>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Username</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody id="driverTable">
+                <tr>
+                    <td colspan="5"
+                        style="text-align:center;
+                               color:#64748b">
+                        Click "Refresh Drivers" to load...
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h2>✅ Package Created Successfully!</h2>
+        <p>Notify the recipient with the tracking
+            code below:</p>
+        <div class="tracking-code-display" id="modalCode">
+        </div>
+        <p style="font-size:13px;color:#64748b">
+            The recipient can track their package by
+            logging in with their email address or
+            using this code directly.
+        </p>
+        <div class="modal-btns">
+            <button class="btn-copy" onclick="copyCode()">
+                📋 Copy Code
+            </button>
+            <button class="btn-close" onclick="closeModal()">
+                ✓ Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080/api';
+    let lastCreatedCode = '';
+
+    // Kontrollo login me sessionStorage
+    window.onload = function() {
+        const isAdmin = sessionStorage.getItem('isAdmin');
+        if (isAdmin === 'true') {
+            showAdminPanel();
+        } else {
+            document.getElementById(
+                'passwordScreen').style.display = 'flex';
+            document.getElementById(
+                'adminPanel').style.display = 'none';
+        }
+    }
+
+    function checkLogin() {
+        const user = document.getElementById(
+            'loginUser').value.trim();
+        const pass = document.getElementById(
+            'loginPass').value;
+
+        if (user === 'admin' && pass === 'admin123') {
+            sessionStorage.setItem('isAdmin', 'true');
+            showAdminPanel();
+        } else {
+            const err = document.getElementById('loginError');
+            err.textContent = 'Invalid credentials!';
+            err.style.display = 'block';
+            setTimeout(() => err.style.display = 'none', 3000);
+        }
+    }
+
+    function showAdminPanel() {
+        document.getElementById(
+            'passwordScreen').style.display = 'none';
+        document.getElementById(
+            'adminPanel').style.display = 'block';
+        loadStats();
+        loadPackages();
+        loadDriversDropdown();
+        loadDrivers();
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetch(`${API}/packages/report`);
+            const data = await res.json();
+            document.getElementById('totalPkg').textContent =
+                data.totalPackages || 0;
+            const s = data.byStatus || {};
+            document.getElementById('createdPkg').textContent =
+                s['CREATED'] || 0;
+            document.getElementById('transitPkg').textContent =
+                s['IN_TRANSIT'] || 0;
+            document.getElementById('deliveredPkg').textContent =
+                s['DELIVERED'] || 0;
+        } catch (err) {
+            console.error('Stats error:', err);
+        }
+    }
+
+    async function loadDriversDropdown() {
+        try {
+            const res = await fetch(`${API}/drivers`);
+            const drivers = await res.json();
+            const select = document.getElementById('assignDriver');
+            select.innerHTML =
+                '<option value="">Select Driver</option>';
+            drivers.forEach(d => {
+                select.innerHTML += `
+                <option value="${d.id}">
+                    🚛 ${d.name}
+                    (${d.available ? 'Available' : 'Busy'})
+                    — ${d.currentLocation || 'N/A'}
+                </option>`;
+            });
+        } catch (err) {
+            console.error('Drivers error:', err);
+        }
+    }
+
+    async function loadPackages() {
+        try {
+            const res = await fetch(`${API}/packages`);
+            const packages = await res.json();
+            const tbody = document.getElementById('packageTable');
+
+            if (packages.length === 0) {
+                tbody.innerHTML = `
+                <tr><td colspan="7"
+                    style="text-align:center;color:#64748b">
+                    No packages yet.
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = packages.map(pkg => `
+            <tr>
+                <td style="font-family:monospace;
+                           color:#60a5fa;font-size:12px">
+                    ${pkg.trackingCode}
+                </td>
+                <td>${pkg.senderName}</td>
+                <td style="font-size:12px;color:#94a3b8">
+                    ${pkg.recipientEmail || '-'}
+                </td>
+                <td>${pkg.destination}</td>
+                <td>
+                    <span class="status-badge ${pkg.status}">
+                        ${pkg.status}
+                    </span>
+                </td>
+                <td style="color:#4ade80;font-size:12px">
+                    ${pkg.assignedDriver ?
+                '🚛 ' + pkg.assignedDriver.name : '-'}
+                </td>
+                <td style="font-size:12px">
+                    ${pkg.currentLocation || '-'}
+                </td>
+            </tr>
+        `).join('');
+
+        } catch (err) {
+            console.error('Packages error:', err);
+        }
+    }
+
+    async function loadDrivers() {
+        try {
+            const res = await fetch(`${API}/drivers`);
+            const drivers = await res.json();
+            const tbody = document.getElementById('driverTable');
+
+            if (drivers.length === 0) {
+                tbody.innerHTML = `
+                <tr><td colspan="5"
+                    style="text-align:center;color:#64748b">
+                    No drivers yet.
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = drivers.map(d => `
+            <tr>
+                <td>${d.name}</td>
+                <td>${d.phone || '-'}</td>
+                <td style="font-family:monospace;
+                           color:#60a5fa">
+                    ${d.username || '-'}
+                </td>
+                <td>${d.currentLocation || '-'}</td>
+                <td>
+                    <span class="status-badge ${d.available ?
+                'CREATED' : 'IN_TRANSIT'}">
+                        ${d.available ?
+                '✅ Available' : '🚛 Busy'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+
+        } catch (err) {
+            console.error('Drivers error:', err);
+        }
+    }
+
+    async function createPackage() {
+        const sender = document.getElementById(
+            'senderName').value.trim();
+        const email = document.getElementById(
+            'recipientEmail').value.trim();
+        const dest = document.getElementById(
+            'destination').value.trim();
+        const weight = document.getElementById('weight').value;
+
+        if (!sender || !email || !dest || !weight) {
+            showMsg('createMsg', 'Fill in all fields!', false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/packages`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    senderName: sender,
+                    recipientEmail: email,
+                    destination: dest,
+                    weight: parseFloat(weight)
+                })
+            });
+
+            const pkg = await res.json();
+            lastCreatedCode = pkg.trackingCode;
+
+            document.getElementById('senderName').value = '';
+            document.getElementById('recipientEmail').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('weight').value = '';
+
+            document.getElementById('modalCode').textContent =
+                pkg.trackingCode;
+            document.getElementById(
+                'modalOverlay').classList.add('show');
+
+            loadPackages();
+            loadStats();
+
+        } catch (err) {
+            showMsg('createMsg',
+                'Error creating package!', false);
+        }
+    }
+
+    async function assignDriver() {
+        const code = document.getElementById(
+            'assignCode').value.trim();
+        const driverId = document.getElementById(
+            'assignDriver').value;
+
+        if (!code || !driverId) {
+            showMsg('assignMsg', 'Fill in all fields!', false);
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${API}/packages/${code}/assign?driverId=${driverId}`,
+                {method: 'PUT'});
+
+            if (res.ok) {
+                showMsg('assignMsg',
+                    '✅ Driver assigned successfully!', true);
+                document.getElementById('assignCode').value = '';
+                loadPackages();
+                loadDriversDropdown();
+                loadDrivers();
+            } else {
+                showMsg('assignMsg',
+                    '❌ Error assigning!', false);
+            }
+        } catch (err) {
+            showMsg('assignMsg',
+                '❌ Connection error!', false);
+        }
+    }
+
+    async function updateStatus() {
+        const code = document.getElementById(
+            'updateCode').value.trim();
+        const status = document.getElementById(
+            'updateStatus').value;
+        const location = document.getElementById(
+            'updateLocation').value.trim();
+
+        if (!code || !status || !location) {
+            showMsg('updateMsg', 'Fill in all fields!', false);
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${API}/packages/${code}/status?status=${status}&location=${location}`,
+                {method: 'PUT'});
+
+            if (res.ok) {
+                showMsg('updateMsg',
+                    `✅ Status updated to ${status}!`, true);
+                document.getElementById('updateCode').value = '';
+                document.getElementById(
+                    'updateLocation').value = '';
+                loadPackages();
+                loadStats();
+            } else {
+                const err = await res.json();
+                showMsg('updateMsg',
+                    `❌ ${err.message}`, false);
+            }
+        } catch (err) {
+            showMsg('updateMsg', '❌ Error!', false);
+        }
+    }
+
+    async function createDriver() {
+        const name = document.getElementById(
+            'driverName').value.trim();
+        const phone = document.getElementById(
+            'driverPhone').value.trim();
+        const location = document.getElementById(
+            'driverLocation').value.trim();
+        const username = document.getElementById(
+            'driverUsername').value.trim();
+        const password = document.getElementById(
+            'driverPassword').value;
+
+        if (!name || !phone || !location ||
+            !username || !password) {
+            showMsg('driverMsg', 'Fill in all fields!', false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/drivers`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name, phone,
+                    currentLocation: location,
+                    username, password
+                })
+            });
+
+            if (res.ok) {
+                showMsg('driverMsg',
+                    `✅ Driver ${name} added! Login: ${username}`,
+                    true);
+                document.getElementById('driverName').value = '';
+                document.getElementById('driverPhone').value = '';
+                document.getElementById(
+                    'driverLocation').value = '';
+                document.getElementById(
+                    'driverUsername').value = '';
+                document.getElementById(
+                    'driverPassword').value = '';
+                loadDrivers();
+                loadDriversDropdown();
+            }
+        } catch (err) {
+            showMsg('driverMsg',
+                '❌ Error adding driver!', false);
+        }
+    }
+
+    function copyCode() {
+        navigator.clipboard.writeText(lastCreatedCode);
+        alert('✅ Code copied: ' + lastCreatedCode);
+    }
+
+    function closeModal() {
+        document.getElementById(
+            'modalOverlay').classList.remove('show');
+    }
+
+    function logout() {
+        sessionStorage.removeItem('isAdmin');
+        window.location.href = 'login.html';
+    }
+
+    function showMsg(id, msg, success) {
+        const el = document.getElementById(id);
+        el.className = `alert ${success ?
+            'alert-success' : 'alert-error'}`;
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 4000);
+    }
+</script>
+
+</body>
+</html>

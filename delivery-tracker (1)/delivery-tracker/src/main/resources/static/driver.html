@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Driver Panel — Delivery Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .driver-header {
+            background: linear-gradient(
+                    135deg, #1a2e1a, #1e293b);
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            border: 1px solid #22c55e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .driver-header h2 {
+            color: #4ade80;
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .driver-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0f172a;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .package-driver-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .package-driver-card:hover {
+            border-color: #22c55e;
+        }
+
+        .package-driver-card h3 {
+            font-family: monospace;
+            color: #4ade80;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .update-form {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .update-form h4 {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .update-form input,
+        .update-form select {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .btn-update {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-update:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .success-msg {
+            background: #052e16;
+            color: #4ade80;
+            border: 1px solid #16a34a;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .pkg-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .pkg-info-item {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .pkg-info-label {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .pkg-info-value {
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #475569;
+        }
+
+        .refresh-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            width: auto;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            border-color: #22c55e;
+            color: #4ade80;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+        }
+
+        .login-box {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 420px;
+            width: 90%;
+            border: 1px solid #334155;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .login-box .icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .login-box h2 {
+            color: #4ade80;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .login-box p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .login-box input {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .btn-driver-login {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+
+        .btn-driver-login:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .login-error {
+            background: #450a0a;
+            color: #f87171;
+            border: 1px solid #7f1d1d;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-box">
+        <span class="icon">🚛</span>
+        <h2>Driver Portal</h2>
+        <p>Sign in to manage your deliveries</p>
+
+        <input type="text"
+               id="driverUsername"
+               placeholder="Username"
+               onkeypress="if(event.key==='Enter') driverLogin()"/>
+        <input type="password"
+               id="driverPassword"
+               placeholder="Password"
+               onkeypress="if(event.key==='Enter') driverLogin()"/>
+        <button class="btn-driver-login"
+                onclick="driverLogin()">
+            Sign In
+        </button>
+        <div class="login-error" id="loginError"></div>
+
+        <p style="margin-top:20px; font-size:12px">
+            <a href="login.html"
+               style="color:#334155">
+                ← Back to main page
+            </a>
+        </p>
+    </div>
+</div>
+
+<!-- Driver Panel -->
+<div id="driverPanel" style="display:none">
+
+    <nav class="navbar">
+        <h1>🚛 Driver Portal</h1>
+        <div>
+        <span style="color:#4ade80;
+                     font-size:14px"
+              id="navDriverName"></span>
+            <a href="#"
+               style="margin-left:16px;color:#64748b"
+               onclick="driverLogout()">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Driver Header -->
+        <div class="driver-header">
+            <div>
+                <h2>👋 Welcome, <span id="driverName"></span>!</h2>
+                <p id="driverLocation">📍 Loading location...</p>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span style="color:#4ade80">Online</span>
+            </div>
+        </div>
+
+        <!-- Assigned Packages -->
+        <div class="card">
+            <h2>📦 My Assigned Packages</h2>
+            <button class="refresh-btn"
+                    onclick="loadPackages()">
+                🔄 Refresh
+            </button>
+            <div id="packagesArea">
+                <div class="empty-state">
+                    <p>Loading packages...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080/api';
+    let currentDriver = null;
+
+    const statusOptions = [
+        'PICKED_UP',
+        'IN_TRANSIT',
+        'DELIVERED'
+    ];
+
+    // Kontrollo nese eshte i loguar
+    window.onload = function() {
+        const saved = localStorage.getItem('driverData');
+        if (saved) {
+            currentDriver = JSON.parse(saved);
+            showDriverPanel();
+        }
+    }
+
+    async function driverLogin() {
+        const username = document.getElementById(
+            'driverUsername').value.trim();
+        const password = document.getElementById(
+            'driverPassword').value;
+
+        if (!username || !password) {
+            showLoginError('Please fill in all fields!');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/drivers/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                currentDriver = data;
+                localStorage.setItem('driverData',
+                    JSON.stringify(data));
+                showDriverPanel();
+            } else {
+                showLoginError(data.message ||
+                    'Invalid credentials!');
+            }
+
+        } catch (err) {
+            showLoginError('Connection error!');
+        }
+    }
+
+    function showDriverPanel() {
+        document.getElementById(
+            'loginScreen').style.display = 'none';
+        document.getElementById(
+            'driverPanel').style.display = 'block';
+
+        document.getElementById('driverName').textContent =
+            currentDriver.name;
+        document.getElementById('navDriverName').textContent =
+            currentDriver.name;
+        document.getElementById('driverLocation').textContent =
+            '📍 ' + (currentDriver.location || 'Unknown');
+
+        loadPackages();
+    }
+
+    async function loadPackages() {
+        try {
+            const res = await fetch(
+                `${API}/drivers/${currentDriver.username}/packages`);
+            const packages = await res.json();
+            showPackages(packages);
+        } catch (err) {
+            document.getElementById('packagesArea').innerHTML =
+                '<div class="empty-state"><p>❌ Error loading packages!</p></div>';
+        }
+    }
+
+    function showPackages(packages) {
+        const area = document.getElementById('packagesArea');
+
+        if (packages.length === 0) {
+            area.innerHTML = `
+            <div class="empty-state">
+                <p>📭 No packages assigned yet.</p>
+                <p style="font-size:13px;margin-top:8px">
+                    Ask admin to assign packages to you.
+                </p>
+            </div>`;
+            return;
+        }
+
+        area.innerHTML = packages.map(pkg => `
+        <div class="package-driver-card">
+            <h3>📦 ${pkg.trackingCode}</h3>
+
+            <div class="pkg-info-grid">
+                <div class="pkg-info-item">
+                    <div class="pkg-info-label">
+                        Recipient
+                    </div>
+                    <div class="pkg-info-value">
+                        👤 ${pkg.senderName}
+                    </div>
+                </div>
+                <div class="pkg-info-item">
+                    <div class="pkg-info-label">
+                        Destination
+                    </div>
+                    <div class="pkg-info-value">
+                        📍 ${pkg.destination}
+                    </div>
+                </div>
+                <div class="pkg-info-item">
+                    <div class="pkg-info-label">
+                        Current Status
+                    </div>
+                    <div class="pkg-info-value">
+                        <span class="status-badge ${pkg.status}">
+                            ${pkg.status}
+                        </span>
+                    </div>
+                </div>
+                <div class="pkg-info-item">
+                    <div class="pkg-info-label">
+                        Current Location
+                    </div>
+                    <div class="pkg-info-value">
+                        🏭 ${pkg.currentLocation || 'N/A'}
+                    </div>
+                </div>
+            </div>
+
+            ${pkg.status !== 'DELIVERED' ? `
+            <div class="update-form">
+                <h4>📍 Update Location & Status</h4>
+                <input type="text"
+                       id="loc-${pkg.trackingCode}"
+                       placeholder="New location (e.g. Durres Hub)"
+                       value="${pkg.currentLocation || ''}"/>
+                <select id="status-${pkg.trackingCode}">
+                    ${statusOptions.map(s => `
+                        <option value="${s}"
+                            ${pkg.status === s ?
+            'selected' : ''}>
+                            ${s}
+                        </option>
+                    `).join('')}
+                </select>
+                <button class="btn-update"
+                        onclick="updatePackage(
+                            '${pkg.trackingCode}')">
+                    📍 Update Location
+                </button>
+                <div class="success-msg"
+                     id="msg-${pkg.trackingCode}">
+                </div>
+            </div>
+            ` : `
+            <div style="text-align:center;
+                        padding:12px;
+                        color:#4ade80;
+                        font-size:14px">
+                ✅ Package Delivered Successfully!
+            </div>
+            `}
+        </div>
+    `).join('');
+    }
+
+    async function updatePackage(trackingCode) {
+        const location = document.getElementById(
+            `loc-${trackingCode}`).value.trim();
+        const status = document.getElementById(
+            `status-${trackingCode}`).value;
+
+        if (!location) {
+            alert('Please enter a location!');
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${API}/drivers/update-location`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: currentDriver.username,
+                        trackingCode: trackingCode,
+                        location: location,
+                        status: status
+                    })
+                });
+
+            if (res.ok) {
+                const msg = document.getElementById(
+                    `msg-${trackingCode}`);
+                msg.textContent =
+                    `✅ Updated! Status: ${status} @ ${location}`;
+                msg.style.display = 'block';
+                setTimeout(() => {
+                    msg.style.display = 'none';
+                    loadPackages();
+                }, 2000);
+            }
+
+        } catch (err) {
+            alert('❌ Update failed!');
+        }
+    }
+
+    function driverLogout() {
+        localStorage.removeItem('driverData');
+        currentDriver = null;
+        document.getElementById(
+            'loginScreen').style.display = 'flex';
+        document.getElementById(
+            'driverPanel').style.display = 'none';
+    }
+
+    function showLoginError(msg) {
+        const el = document.getElementById('loginError');
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 4000);
+    }
+</script>
+
+</body>
+</html>

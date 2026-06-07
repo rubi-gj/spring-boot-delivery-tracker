@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Gjurmo Paketen</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <h1>📦 Delivery Tracker</h1>
+    <div>
+        <a href="track.html">Gjurmo Paketen</a>
+        <a href="admin.html">Panel Admin</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Kerkimi -->
+    <div class="card">
+        <h2>🔍 Gjurmo Paketen Tende</h2>
+        <input type="text" id="trackingInput"
+               placeholder="Vendos kodin e paketes: TRK..."
+               onkeypress="if(event.key==='Enter') trackPackage()"/>
+        <button onclick="trackPackage()">
+            Kerko Paketen
+        </button>
+        <div id="errorMsg" class="alert alert-error"
+             style="display:none; margin-top:12px"></div>
+    </div>
+
+    <!-- Rezultati -->
+    <div class="track-result" id="trackResult">
+
+        <h2>📦 Informacioni i Paketes</h2>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-step">
+                <div class="progress-dot" id="step-CREATED">
+                    📦
+                </div>
+                <span class="progress-label">Krijuar</span>
+            </div>
+            <div class="progress-step">
+                <div class="progress-dot" id="step-PICKED_UP">
+                    🚛
+                </div>
+                <span class="progress-label">Marre</span>
+            </div>
+            <div class="progress-step">
+                <div class="progress-dot" id="step-IN_TRANSIT">
+                    🏭
+                </div>
+                <span class="progress-label">Ne Transit</span>
+            </div>
+            <div class="progress-step">
+                <div class="progress-dot" id="step-DELIVERED">
+                    ✅
+                </div>
+                <span class="progress-label">Dorezuar</span>
+            </div>
+        </div>
+
+        <!-- Detajet -->
+        <table>
+            <tr>
+                <td><strong>Kodi:</strong></td>
+                <td id="pkgCode"></td>
+            </tr>
+            <tr>
+                <td><strong>Derguesi:</strong></td>
+                <td id="pkgSender"></td>
+            </tr>
+            <tr>
+                <td><strong>Destinacioni:</strong></td>
+                <td id="pkgDestination"></td>
+            </tr>
+            <tr>
+                <td><strong>Pesha:</strong></td>
+                <td id="pkgWeight"></td>
+            </tr>
+            <tr>
+                <td><strong>Statusi:</strong></td>
+                <td id="pkgStatus"></td>
+            </tr>
+            <tr>
+                <td><strong>Vendodhja:</strong></td>
+                <td id="pkgLocation"></td>
+            </tr>
+            <tr>
+                <td><strong>Krijuar:</strong></td>
+                <td id="pkgCreated"></td>
+            </tr>
+        </table>
+
+        <!-- Historia -->
+        <div style="margin-top: 24px">
+            <h2>📋 Historia e Statuseve</h2>
+            <div id="historyList"
+                 style="margin-top:12px;
+                        color:#94a3b8;
+                        font-size:14px">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080/api';
+
+    const statusOrder = [
+        'CREATED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED'
+    ];
+
+    async function trackPackage() {
+        const code = document.getElementById(
+            'trackingInput').value.trim();
+
+        if (!code) {
+            showError('Vendos kodin e paketes!');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/packages/track/${code}`);
+
+            if (!res.ok) {
+                showError('Paketa nuk u gjet! Kontrollo kodin.');
+                document.getElementById(
+                    'trackResult').classList.remove('show');
+                return;
+            }
+
+            const pkg = await res.json();
+            document.getElementById('errorMsg').style.display = 'none';
+            showPackage(pkg);
+            loadHistory(code);
+
+        } catch (err) {
+            showError('Gabim lidhjeje me serverin!');
+        }
+    }
+
+    function showPackage(pkg) {
+        document.getElementById('pkgCode').textContent =
+            pkg.trackingCode;
+        document.getElementById('pkgSender').textContent =
+            pkg.senderName;
+        document.getElementById('pkgDestination').textContent =
+            pkg.destination;
+        document.getElementById('pkgWeight').textContent =
+            pkg.weight + ' kg';
+        document.getElementById('pkgStatus').innerHTML =
+            `<span class="status-badge ${pkg.status}">
+            ${pkg.status}
+         </span>`;
+        document.getElementById('pkgLocation').textContent =
+            pkg.currentLocation || 'N/A';
+        document.getElementById('pkgCreated').textContent =
+            new Date(pkg.createdAt).toLocaleString('sq-AL');
+
+        // Perditeso progress bar
+        statusOrder.forEach((s, index) => {
+            const dot = document.getElementById(`step-${s}`);
+            const currentIndex = statusOrder.indexOf(pkg.status);
+            dot.className = 'progress-dot';
+            if (index < currentIndex) dot.classList.add('done');
+            else if (index === currentIndex)
+                dot.classList.add('active');
+        });
+
+        document.getElementById(
+            'trackResult').classList.add('show');
+    }
+
+    async function loadHistory(code) {
+        try {
+            const res = await fetch(
+                `${API}/packages/${code}/history`);
+            const history = await res.json();
+            const div = document.getElementById('historyList');
+
+            if (history.length === 0) {
+                div.innerHTML = '<p>Nuk ka histori ende.</p>';
+                return;
+            }
+
+            div.innerHTML = history.map(h =>
+                `<p style="padding:8px 0;
+                       border-bottom:1px solid #334155">
+                📍 ${h}
+             </p>`
+            ).join('');
+
+        } catch (err) {
+            console.error('Historia nuk u ngarkua:', err);
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
